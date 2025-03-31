@@ -3,12 +3,12 @@
         const formData = new FormData(form);
         const formDetails = {};
 
-        // Convert FormData entries to a plain object
+        // Convert FormData to plain object
         formData.forEach((value, key) => {
             formDetails[key] = value;
         });
 
-        // Also capture by ID or class if name is missing
+        // Fallback: capture by id/class if not in FormData
         form.querySelectorAll('input, textarea, select').forEach(element => {
             const key = element.name || element.id || element.className;
             if (key && !formDetails[key]) {
@@ -18,54 +18,67 @@
 
         console.log("📩 Form Captured:", formDetails);
 
-        // Basic validations
-        const nameValid = formDetails.name || formDetails.id_name || formDetails.class_name;
-        const emailValid = formDetails.email || formDetails.id_email || formDetails.class_email;
+        // 🔍 Normalize keys for easier validation
+        const normalized = Object.keys(formDetails).reduce((acc, key) => {
+            const cleanKey = key.toLowerCase().replace(/[-_]/g, ''); // e.g. your-name → yourname
+            acc[cleanKey] = formDetails[key];
+            return acc;
+        }, {});
 
-        if (!nameValid) {
-            alert("Name field is required. Please check your form.");
-            console.error("❌ Name field missing");
+        // ✅ Smart validation for name/email (matches things like your-name, your_email, etc)
+        const name = normalized.name || normalized.yourname || '';
+        const email = normalized.email || normalized.youremail || '';
+
+        if (!name) {
+            alert("⚠️ Name field is required. Please check your form.");
+            console.error("❌ Name missing");
             return;
         }
 
-        if (!emailValid) {
-            alert("Email field is required. Please check your form.");
-            console.error("❌ Email field missing");
+        if (!email) {
+            alert("⚠️ Email field is required. Please check your form.");
+            console.error("❌ Email missing");
             return;
         }
 
-        // Send data to Django API
-        fetch("https://leadtracker-production.up.railway.app/api/leads/create/", {
+        // 📤 Send to local Django app
+        fetch("http://127.0.0.1:8000/leads/create/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formDetails),
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                phone: normalized.phone || '',
+                message: normalized.message || '',
+                source: window.location.hostname || 'unknown',
+            }),
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
             console.log("✅ Server Response:", data);
             if (data.message) {
-                alert("Lead captured successfully!");
-                form.reset(); // optional: clear the form
+                alert("🎉 Lead captured successfully!");
+                form.reset();
             } else {
-                alert("Error: " + (data.error || "Unexpected issue"));
+                alert("Error: " + (data.error || "Unknown issue"));
             }
         })
         .catch(error => {
-            console.error("❌ Error submitting lead:", error);
-            alert("Something went wrong. Please try again.");
+            console.error("❌ Fetch Error:", error);
+            alert("Something went wrong. Check the console.");
         });
     }
 
     function handleFormSubmit(event) {
-        event.preventDefault(); // prevent page reload
-        const form = event.target;
-        captureFormData(form);
+        event.preventDefault();
+        captureFormData(event.target);
     }
 
-    // Attach to all forms on page
     document.addEventListener('DOMContentLoaded', () => {
         const forms = document.querySelectorAll('form');
-        forms.forEach(form => form.addEventListener('submit', handleFormSubmit));
+        forms.forEach(form => {
+            form.addEventListener('submit', handleFormSubmit);
+        });
         console.log(`📡 Tracking ${forms.length} form(s) on this page...`);
     });
 })();
