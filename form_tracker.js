@@ -28,6 +28,7 @@
         // ✅ Smart validation for name/email (matches things like your-name, your_email, etc)
         const name = normalized.name || normalized.yourname || '';
         const email = normalized.email || normalized.youremail || '';
+        const subject = normalized.subject || normalized.yoursubject || ''
 
         if (!name) {
             alert("⚠️ Name field is required. Please check your form.");
@@ -41,6 +42,12 @@
             return;
         }
 
+        if (!subject) {
+            alert("⚠️ Email field is required. Please check your form.");
+            console.error("❌ Email missing");
+            return;
+        }
+
         // 📤 Send to local Django app
         fetch("https://leadtracker-production.up.railway.app/leads/create/", {
             method: "POST",
@@ -49,6 +56,7 @@
                 name: name,
                 email: email,
                 phone: normalized.phone || '',
+                subject:normalized.subject ||'',
                 message: normalized.message || '',
                 source: window.location.hostname || 'unknown',
             }),
