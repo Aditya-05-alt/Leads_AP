@@ -65,7 +65,7 @@
         .then(data => {
             console.log("✅ Server Response:", data);
             if (data.message) {
-                alert("🎉 Lead captured successfully!");
+                // alert("🎉 Lead captured successfully!");
                 form.reset();
             } else {
                 alert("Error: " + (data.error || "Unknown issue"));
