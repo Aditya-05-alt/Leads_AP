@@ -58,7 +58,7 @@
 //                 phone: normalized.phone || '',
 //                 subject:normalized.subject ||'',
 //                 message: normalized.message || '',
-//                 source: window.location.hostname || 'unknown',
+                // source: window.location.hostname || 'unknown',
 //             }),
 //         })
 //         .then(res => res.json())
@@ -144,7 +144,8 @@
                 phone: normalized.phone || '',
                 subject: subject,
                 message: normalized.message || '',
-                source: window.location.href || 'unknown',
+                // source: window.location.href || 'unknown',
+                source: document.referrer || 'direct',
             }),
         })
         .then(res => res.json())
