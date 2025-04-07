@@ -53,8 +53,9 @@
                 phone: normalized.phone || '',
                 subject: subject,
                 message: normalized.message || '',
-                pagelink: window.location.href || 'unknown',
-                source: document.referrer || 'direct',
+                source: document.referrer || 'direct',       // 🌐 Where user came *from*
+                page_link: window.location.href || 'unknown', // 🏠 Where form was submitted
+                // medium: 'Web Form'
             }),
         })
         .then(res => res.json())
