@@ -52,7 +52,7 @@
                 phone: normalized.phone || '',
                 subject: subject,
                 message: normalized.message || '',
-                // source: window.location.href || 'unknown',
+                pagelink: window.location.href || 'unknown',
                 source: document.referrer || 'direct',
             }),
         })
