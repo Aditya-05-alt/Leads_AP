@@ -8,6 +8,7 @@
             });
         });
         console.log(`📡 Tracking ${forms.length} form(s) on this page...`);
+        console.log("Aditya is tracking");
     }
 
     function captureFormData(form) {
