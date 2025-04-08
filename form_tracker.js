@@ -50,7 +50,7 @@
         const email = normalized.email || normalized.youremail || '';
         const subject = normalized.subject || normalized.yoursubject || '';
         const phone = normalized.phone || normalized.yourphone || '';
-        const message = normalized.message || normalized.comment || normalized.comments || normalized.enquiry || '';
+        const message = normalized.message || normalized.comment || normalized.comments || normalized.enquiry || normalized.yourmessage;
 
         const referrer = document.referrer || 'direct';
         const medium = getMediumFromReferrer(referrer);
