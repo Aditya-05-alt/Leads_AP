@@ -1,4 +1,17 @@
 (function () {
+    function getMediumFromReferrer(referrer) {
+        if (!referrer) return "direct";
+        const ref = referrer.toLowerCase();
+
+        if (ref.includes("google")) return "google";
+        if (ref.includes("facebook")) return "facebook";
+        if (ref.includes("instagram")) return "instagram";
+        if (ref.includes("linkedin")) return "linkedin";
+        if (ref.includes("bing")) return "bing";
+        if (ref.includes("youtube")) return "youtube";
+        return "referral";
+    }
+
     function initFormTracking() {
         const forms = document.querySelectorAll('form');
         forms.forEach(form => {
@@ -8,7 +21,6 @@
             });
         });
         console.log(`📡 Tracking ${forms.length} form(s) on this page...`);
-        console.log("Aditya is tracking");
     }
 
     function captureFormData(form) {
@@ -37,12 +49,24 @@
         const name = normalized.name || normalized.yourname || '';
         const email = normalized.email || normalized.youremail || '';
         const subject = normalized.subject || normalized.yoursubject || '';
+        const phone = normalized.phone || normalized.yourphone || '';
+        const message = normalized.message || normalized.comment || normalized.comments || normalized.enquiry || '';
 
-        // if (!name || !email || !subject) {
-        //     console.error("❌ Missing required fields");
-        //     alert("Please fill out name, email, and subject.");
-        //     return;
-        // }
+        const referrer = document.referrer || 'direct';
+        const medium = getMediumFromReferrer(referrer);
+        const pageLink = window.location.href;
+
+        // Optional validation
+        if (!name || !email) {
+            console.error("❌ Missing required fields (name/email)");
+            alert("Please fill out name and email.");
+            return;
+        }
+
+        // Log for debug
+        console.log("📤 Sending lead to API:", {
+            name, email, phone, subject, message, referrer, medium, pageLink
+        });
 
         fetch("https://leadtracker-production.up.railway.app/leads/create/", {
             method: "POST",
@@ -50,30 +74,29 @@
             body: JSON.stringify({
                 name: name,
                 email: email,
-                phone: normalized.phone || '',
+                phone: phone,
                 subject: subject,
-                message: normalized.message || '',
-                source: document.referrer || 'direct',       // 🌐 Where user came *from*
-                page_link: window.location.href || 'unknown', // 🏠 Where form was submitted
-                // medium: 'Web Form'
+                message: message,
+                source: referrer,
+                medium: medium,
+                page_link: pageLink
             }),
         })
-        .then(res => res.json())
-        .then(data => {
-            console.log("✅ Server Response:", data);
-            if (data.message) {
-                form.reset();
-            } else {
-                alert("Error: " + (data.error || "Unknown issue"));
-            }
-        })
-        .catch(error => {
-            console.error("❌ Fetch Error:", error);
-            alert("Something went wrong. Check the console.");
-        });
+            .then(res => res.json())
+            .then(data => {
+                console.log("✅ Server Response:", data);
+                if (data.message) {
+                    form.reset();
+                } else {
+                    alert("Error: " + (data.error || "Unknown issue"));
+                }
+            })
+            .catch(error => {
+                console.error("❌ Fetch Error:", error);
+                alert("Something went wrong. Check the console.");
+            });
     }
 
-    // ✅ Ensure DOM is ready before binding
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initFormTracking);
     } else {
