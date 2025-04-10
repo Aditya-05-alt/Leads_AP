@@ -12,16 +12,26 @@
         return "referral";
     }
 
-    function initFormTracking() {
-        const forms = document.querySelectorAll('form');
+   function initFormTracking() {
+    function attachListenersToForms() {
+        const forms = document.querySelectorAll('form:not([data-tracked])');
         forms.forEach(form => {
+            form.setAttribute('data-tracked', 'true');  // prevent duplicate
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
                 captureFormData(form);
             });
         });
-        console.log(`📡 Tracking ${forms.length} form(s) on this page...`);
+        console.log(`📡 Tracking ${forms.length} new form(s)...`);
     }
+
+    attachListenersToForms(); // initial
+
+    // 👀 Observe dynamically added forms
+    const observer = new MutationObserver(attachListenersToForms);
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
 
     function captureFormData(form) {
         const formData = new FormData(form);
