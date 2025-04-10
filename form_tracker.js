@@ -23,6 +23,7 @@
             });
         });
         console.log(`📡 Tracking ${forms.length} new form(s)...`);
+        console.log(`Aditya`);
     }
 
     attachListenersToForms(); // initial
