@@ -79,7 +79,7 @@
             name, email, phone, subject, message, referrer, medium, pageLink
         });
 // https://leadtracker-production.up.railway.app/
-        fetch("http://127.0.0.1:8000/leads/create/", {
+        fetch("https://leadtracker-production.up.railway.app/leads/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
