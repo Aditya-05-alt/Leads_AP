@@ -81,7 +81,7 @@
 
         const name = normalized.name || normalized.yourname || '';
         const email = normalized.email || normalized.youremail || '';
-        const subject = normalized.subject || '';
+        const subject = normalized.subject || normalized.yoursubject;
         const phone = normalized.phone || '';
         const message = normalized.message || normalized.comment || normalized.comments || normalized.enquiry || normalized.yourmessage;;
 
