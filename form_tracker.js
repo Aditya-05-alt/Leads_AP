@@ -1,38 +1,62 @@
 (function () {
-    function getMediumFromReferrer(referrer) {
+    function parseUTMParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return {
+            source: urlParams.get("utm_source") || "",      // e.g., google, facebook
+            medium: urlParams.get("utm_medium") || "",      // e.g., cpc, organic
+            campaign: urlParams.get("utm_campaign") || "",
+            term: urlParams.get("utm_term") || "",
+            content: urlParams.get("utm_content") || ""
+        };
+    }
+
+    function inferSource(referrer, utmSource) {
+        if (utmSource) return utmSource;
+
+        if (!referrer) return "direct";
+        const url = new URL(referrer);
+        const host = url.hostname.replace(/^www\./, '');
+
+        if (host.includes("google")) return "google";
+        if (host.includes("facebook")) return "facebook";
+        if (host.includes("instagram")) return "instagram";
+        if (host.includes("linkedin")) return "linkedin";
+        if (host.includes("bing")) return "bing";
+        if (host.includes("youtube")) return "youtube";
+        if (host.includes("rvtrader")) return "rvtrader.com";
+
+        return host; // fallback to domain name
+    }
+
+    function inferMedium(referrer, utmMedium) {
+        if (utmMedium) return utmMedium;
+
         if (!referrer) return "direct";
         const ref = referrer.toLowerCase();
 
-        if (ref.includes("google")) return "google";
-        if (ref.includes("facebook")) return "facebook";
-        if (ref.includes("instagram")) return "instagram";
-        if (ref.includes("linkedin")) return "linkedin";
-        if (ref.includes("bing")) return "bing";
-        if (ref.includes("youtube")) return "youtube";
-        return "referral";
+        if (ref.includes("google.com") || ref.includes("bing.com")) return "organic";
+        if (ref.includes("facebook") || ref.includes("youtube") || ref.includes("linkedin")) return "referral";
+        if (ref.includes("cpc") || ref.includes("gclid")) return "cpc";
+
+        return "referral"; // fallback
     }
 
-   function initFormTracking() {
-    function attachListenersToForms() {
-        const forms = document.querySelectorAll('form:not([data-tracked])');
-        forms.forEach(form => {
-            form.setAttribute('data-tracked', 'true');  // prevent duplicate
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                captureFormData(form);
+    function initFormTracking() {
+        function attachListenersToForms() {
+            const forms = document.querySelectorAll('form:not([data-tracked])');
+            forms.forEach(form => {
+                form.setAttribute('data-tracked', 'true');
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    captureFormData(form);
+                });
             });
-        });
-        console.log(`📡 Tracking ${forms.length} new form(s)...`);
-        console.log(`Aditya`);
+        }
+
+        attachListenersToForms();
+        const observer = new MutationObserver(attachListenersToForms);
+        observer.observe(document.body, { childList: true, subtree: true });
     }
-
-    attachListenersToForms(); // initial
-
-    // 👀 Observe dynamically added forms
-    const observer = new MutationObserver(attachListenersToForms);
-    observer.observe(document.body, { childList: true, subtree: true });
-}
-
 
     function captureFormData(form) {
         const formData = new FormData(form);
@@ -49,8 +73,6 @@
             }
         });
 
-        console.log("📩 Form Captured:", formDetails);
-
         const normalized = Object.keys(formDetails).reduce((acc, key) => {
             const cleanKey = key.toLowerCase().replace(/[-_]/g, '');
             acc[cleanKey] = formDetails[key];
@@ -59,53 +81,43 @@
 
         const name = normalized.name || normalized.yourname || '';
         const email = normalized.email || normalized.youremail || '';
-        const subject = normalized.subject || normalized.yoursubject || '';
-        const phone = normalized.phone || normalized.yourphone || '';
-        const message = normalized.message || normalized.comment || normalized.comments || normalized.enquiry || normalized.yourmessage;
+        const subject = normalized.subject || '';
+        const phone = normalized.phone || '';
+        const message = normalized.message || '';
 
-        const referrer = document.referrer || 'direct';
-        const medium = getMediumFromReferrer(referrer);
+        const utms = parseUTMParams();
+        const referrer = document.referrer || '';
         const pageLink = window.location.href;
 
-        // Optional validation
-        if (!name || !email) {
-            console.error("❌ Missing required fields (name/email)");
-            alert("Please fill out name and email.");
-            return;
-        }
+        const leadPayload = {
+            name,
+            email,
+            phone,
+            subject,
+            message,
+            page_link: pageLink,
+            source: inferSource(referrer, utms.source),
+            medium: inferMedium(referrer, utms.medium),
+            utm_campaign: utms.campaign,
+            utm_term: utms.term,
+            utm_content: utms.content
+        };
 
-        // Log for debug
-        console.log("📤 Sending lead to API:", {
-            name, email, phone, subject, message, referrer, medium, pageLink
-        });
-// https://leadtracker-production.up.railway.app/
-        fetch("https://leadtracker-production.up.railway.app/leads/create/",{
+        console.log("📤 Sending lead to API:", leadPayload);
+
+        fetch("https://leadtracker-production.up.railway.app/leads/create/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                name: name,
-                email: email,
-                phone: phone,
-                subject: subject,
-                message: message,
-                source: referrer,
-                medium: medium,
-                page_link: pageLink
-            }),
+            body: JSON.stringify(leadPayload),
         })
-            .then(res => res.json())
-            .then(data => {
-                console.log("✅ Server Response:", data);
-                if (data.message) {
-                    form.reset();
-                } else {
-                    alert("Error: " + (data.error || "Unknown issue"));
-                }
-            })
-            .catch(error => {
-                console.error("❌ Fetch Error:", error);
-                alert("Something went wrong. Check the console.");
-            });
+        .then(res => res.json())
+        .then(data => {
+            console.log("✅ Server Response:", data);
+            if (data.message) form.reset();
+        })
+        .catch(error => {
+            console.error("❌ Fetch Error:", error);
+        });
     }
 
     if (document.readyState === 'loading') {
