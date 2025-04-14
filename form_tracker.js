@@ -83,7 +83,7 @@
         const email = normalized.email || normalized.youremail || '';
         const subject = normalized.subject || '';
         const phone = normalized.phone || '';
-        const message = const message = normalized.message || normalized.comment || normalized.comments || normalized.enquiry || normalized.yourmessage;;
+        const message = normalized.message || normalized.comment || normalized.comments || normalized.enquiry || normalized.yourmessage;;
 
         const utms = parseUTMParams();
         const referrer = document.referrer || '';
